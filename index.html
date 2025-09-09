@@ -1,22 +1,146 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Telegram Mini App</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doraemon Mini App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="//libtl.com/sdk.js" data-zone="9842278" data-sdk="show_9842278"></script>
+  <style>
+    body.dark { background: #0f172a; color: #e2e8f0; }
+    body.light { background: #f8fafc; color: #1e293b; }
+    .card { border-radius: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  </style>
 </head>
-<body>
-  <h1>🚀 আমার প্রথম Mini App</h1>
-  <p id="user">লোড হচ্ছে...</p>
+<body class="light transition duration-300">
 
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Header -->
+  <header class="p-4 flex justify-between items-center card bg-gradient-to-r from-blue-500 to-cyan-400 text-white">
+    <div class="flex items-center gap-3">
+      <img src="https://upload.wikimedia.org/wikipedia/en/b/bd/Doraemon_character.png" class="w-12 h-12 rounded-full border">
+      <h1 class="text-xl font-bold">Doraemon Earn App</h1>
+    </div>
+    <button id="toggleTheme" class="px-3 py-1 rounded bg-white text-black">🌙</button>
+  </header>
+
+  <!-- Main -->
+  <main class="p-4 space-y-4 max-w-lg mx-auto">
+    
+    <!-- Profile -->
+    <section class="card p-4 bg-white dark:bg-slate-800">
+      <h2 class="text-lg font-semibold mb-2">👤 প্রোফাইল</h2>
+      <p id="username">Name: লোড হচ্ছে...</p>
+      <p id="balance">ব্যালান্স: 0.00 টাকা</p>
+      <p id="adsCount">আজকের বিজ্ঞাপন: 0/100</p>
+      <p id="refCode">রেফার কোড: ...</p>
+    </section>
+
+    <!-- Ads -->
+    <section class="card p-4 bg-white dark:bg-slate-800 text-center">
+      <h2 class="text-lg font-semibold mb-2">📺 বিজ্ঞাপন দেখুন</h2>
+      <div id="ad-container" class="my-3">
+        <!-- Monetag ads will appear -->
+      </div>
+      <button id="watchAd" class="bg-blue-600 text-white px-4 py-2 rounded">▶️ Watch Ad</button>
+      <p class="mt-2 text-sm text-gray-500">প্রতি বিজ্ঞাপনে: 0.20 টাকা (১০ সেকেন্ড পর যোগ হবে)</p>
+    </section>
+
+    <!-- Withdraw -->
+    <section class="card p-4 bg-white dark:bg-slate-800">
+      <h2 class="text-lg font-semibold mb-2">💸 উইথড্র</h2>
+      <input id="withdrawNumber" type="text" placeholder="বিকাশ নাম্বার" class="w-full p-2 border rounded mb-2 dark:bg-slate-700">
+      <input id="withdrawAmount" type="number" placeholder="পরিমাণ (মিন ১০)" class="w-full p-2 border rounded mb-2 dark:bg-slate-700">
+      <button id="withdrawBtn" class="bg-green-600 text-white px-4 py-2 rounded w-full">রিকোয়েস্ট পাঠান</button>
+      <button onclick="copyNumber()" class="mt-2 text-sm underline text-blue-500">📋 নাম্বার কপি করুন</button>
+    </section>
+
+    <!-- Referral -->
+    <section class="card p-4 bg-white dark:bg-slate-800">
+      <h2 class="text-lg font-semibold mb-2">👥 রেফার সিস্টেম</h2>
+      <p>প্রতি রেফারে: 0.30 টাকা</p>
+      <p>আপনার লিংক:</p>
+      <input id="refLink" class="w-full p-2 border rounded dark:bg-slate-700" readonly>
+    </section>
+
+    <!-- Footer -->
+    <footer class="text-center text-sm text-gray-500 mt-6">
+      ⏰ <span id="clock"></span> | <a href="https://t.me/yourchannel" target="_blank" class="underline">📢 আমাদের চ্যানেল</a>
+    </footer>
+  </main>
+
   <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
+    const API_URL = "https://your-backend-url.com"; // 🔗 আপনার backend লিংক বসান
+    let token = null;
 
-    const user = tg.initDataUnsafe?.user;
-    document.getElementById("user").innerText =
-      user ? `হ্যালো, ${user.first_name}!` : "হ্যালো, অতিথি!";
+    // Theme Toggle
+    document.getElementById("toggleTheme").onclick = () => {
+      document.body.classList.toggle("dark");
+      document.body.classList.toggle("light");
+    };
+
+    // Clock
+    setInterval(() => {
+      document.getElementById("clock").innerText = new Date().toLocaleTimeString();
+    }, 1000);
+
+    // Copy Number
+    function copyNumber() {
+      const num = document.getElementById("withdrawNumber").value;
+      navigator.clipboard.writeText(num);
+      alert("নাম্বার কপি হয়েছে ✅");
+    }
+
+    // Dummy Login (Telegram WebApp)
+    async function login() {
+      const initData = window.Telegram?.WebApp?.initData || "";
+      const res = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ initData })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        token = data.token;
+        document.getElementById("username").innerText = "Name: " + data.profile.firstName;
+        document.getElementById("balance").innerText = "ব্যালান্স: " + data.profile.balance.toFixed(2) + " টাকা";
+        document.getElementById("adsCount").innerText = "আজকের বিজ্ঞাপন: " + data.profile.dailyAds + "/100";
+        document.getElementById("refCode").innerText = "রেফার কোড: " + data.profile.referralCode;
+        document.getElementById("refLink").value = "https://t.me/YourBot?start=" + data.profile.referralCode;
+      }
+    }
+
+    // Watch Ad
+    document.getElementById("watchAd").onclick = async () => {
+      if (!token) return alert("আগে লগইন করুন");
+      await new Promise(r => setTimeout(r, 10000)); // 10 সেকেন্ড
+      const res = await fetch(`${API_URL}/ad/complete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token }
+      });
+      const data = await res.json();
+      if (data.ok) {
+        document.getElementById("balance").innerText = "ব্যালান্স: " + data.balance.toFixed(2) + " টাকা";
+        alert("🎉 0.20 টাকা যোগ হয়েছে!");
+      } else {
+        alert(data.error);
+      }
+    };
+
+    // Withdraw
+    document.getElementById("withdrawBtn").onclick = async () => {
+      if (!token) return alert("আগে লগইন করুন");
+      const number = document.getElementById("withdrawNumber").value;
+      const amount = parseFloat(document.getElementById("withdrawAmount").value);
+      const res = await fetch(`${API_URL}/withdraw`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({ number, amount })
+      });
+      const data = await res.json();
+      alert(data.msg || data.error);
+    };
+
+    login();
   </script>
 </body>
 </html>
